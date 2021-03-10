@@ -1,2 +1,2 @@
-# Doge-UnhookEtw.c
+# Doge-UnhookEtw
 unhook etw by golang
