@@ -23,5 +23,3 @@ https://idiotc4t.com/defense-evasion/memory-pacth-bypass-etw
 
 5. 本人已不参与大小HW活动的攻击方了，若溯源到timwhite id与本人无关
 
-
-![image](https://user-images.githubusercontent.com/36320909/138020299-4d8a7bb4-913e-46e6-8565-5fc9ee8aec79.png)
