@@ -22,3 +22,6 @@ https://idiotc4t.com/defense-evasion/memory-pacth-bypass-etw
 4. 若用本人项目去进行：HW演练/红蓝对抗/APT/黑产/恶意行为/违法行为/割韭菜，等行为，本人概不负责，也与本人无关
 
 5. 本人已不参与大小HW活动的攻击方了，若溯源到timwhite id与本人无关
+
+
+![image](https://user-images.githubusercontent.com/36320909/138020299-4d8a7bb4-913e-46e6-8565-5fc9ee8aec79.png)
