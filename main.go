@@ -70,6 +70,11 @@ func patchETW() {
 		r := WriteProcessMemory(handle, dataAddr[i], &data[0], uintptr(uint32(datalength)), &nLength)
 		fmt.Println(r)
 	}
+	
+	var patch = []byte{0xc3}
+	datalength := len(patch)
+	var nLength uintptr
+	WriteProcessMemory(handle, procEtwEventRegister.Addr(), &patch[0], uintptr(uint32(datalength)), &nLength)
 }
 
 func main(){
